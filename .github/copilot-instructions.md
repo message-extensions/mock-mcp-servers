@@ -2,7 +2,10 @@
 
 ## General Guidelines
 
-- Use the documentation mentioned in `./mcp_github_docs.md` & `./mcp_python_sdk_README.md` as reference when asked to build an MCP server
+- Use the documentation mentioned in `#file:.github/mcp_github_docs.md` & `#file:.github/mcp_python_sdk_README.md` as reference when asked any questions specific to development scenarios with MCP:
+    - Building MCP servers
+    - Debugging MCP servers
+    - Testing MCP servers
 - Always prioritize readability and clarity.
 - For algorithm-related code, include explanations of the approach used.
 - Write code with good maintainability practices, including comments on why certain design decisions were made.
