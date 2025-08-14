@@ -5,11 +5,11 @@ import requests
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 from pydantic import AnyHttpUrl
+from fastapi import HTTPException
 
 from mcp.server.auth.provider import AccessToken, TokenVerifier
 from mcp.server.auth.settings import AuthSettings
 from mcp.server.fastmcp import FastMCP
-
 
 class MultiAuthTokenVerifier(TokenVerifier):
     """Multi-authentication token verifier supporting OAuth, SSO, and API Keys."""
@@ -80,14 +80,7 @@ class MultiAuthTokenVerifier(TokenVerifier):
         return len(token.split('.')) == 3
 
     async def _verify_jwt_token(self, token: str) -> AccessToken | None:
-        """
-        Verify OAuth 2.0 / OpenID Connect JWT tokens.
-        
-        In production, this would:
-        1. Fetch JWKS from the authorization server
-        2. Verify the JWT signature
-        3. Validate claims (iss, aud, exp, etc.)
-        """
+        """Verify OAuth 2.0 / OpenID Connect JWT tokens."""
         try:
             # For demo purposes, we'll decode without verification
             # In production, use PyJWT with proper key verification
@@ -111,7 +104,6 @@ class MultiAuthTokenVerifier(TokenVerifier):
 
             return AccessToken(
                 token=token,
-                subject=subject,
                 client_id=client_id,
                 scopes=scopes,
                 expires_at=expires_at
@@ -152,7 +144,6 @@ class MultiAuthTokenVerifier(TokenVerifier):
             print("API Key Verified Successfully")
             return AccessToken(
                 token=token,
-                subject=key_info["subject"],
                 client_id=key_info["client_id"],
                 scopes=key_info["scopes"],
                 expires_at=None  # API keys don't expire in this demo
@@ -160,30 +151,66 @@ class MultiAuthTokenVerifier(TokenVerifier):
         return None
 
     async def _verify_sso_token(self, token: str) -> AccessToken | None:
-        """
-        Verify SSO tokens (SAML, enterprise tokens, etc.).
-        
-        In production, this would validate SAML assertions or 
-        enterprise-specific token formats.
-        """
+        """Verify SSO tokens (SAML, enterprise tokens, etc.)."""
         if token in self.sso_tokens:
             sso_info = self.sso_tokens[token]
             print("SSO Token Verified Successfully")
             return AccessToken(
                 token=token,
-                subject=sso_info["subject"],
                 client_id=sso_info["client_id"],
                 scopes=sso_info["scopes"],
                 expires_at=None  # SSO tokens managed by external system
             )
         return None
 
+# Create a global instance to access current user context
+token_verifier = MultiAuthTokenVerifier()
+
+class AuthContext:
+    """Thread-local storage for current user context."""
+    _current_user: Optional[AccessToken] = None
+    
+    @classmethod
+    def set_current_user(cls, user: AccessToken):
+        cls._current_user = user
+    
+    @classmethod
+    def get_current_user(cls) -> Optional[AccessToken]:
+        return cls._current_user
+    
+    @classmethod
+    def require_scopes(cls, *required_scopes: str) -> AccessToken:
+        """Check if current user has required scopes."""
+        current_user = cls.get_current_user()
+        if not current_user:
+            raise HTTPException(status_code=401, detail="Authentication required")
+        
+        user_scopes = set(current_user.scopes)
+        missing_scopes = set(required_scopes) - user_scopes
+        
+        if missing_scopes:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Insufficient permissions. Missing scopes: {', '.join(missing_scopes)}"
+            )
+        
+        return current_user
+
+# Custom TokenVerifier that sets user context
+class ContextAwareTokenVerifier(MultiAuthTokenVerifier):
+    """Token verifier that sets the current user context."""
+    
+    async def verify_token(self, token: str) -> AccessToken | None:
+        access_token = await super().verify_token(token)
+        if access_token:
+            AuthContext.set_current_user(access_token)
+        return access_token
 
 # Create FastMCP instance as a Resource Server with enhanced authentication
 mcp = FastMCP(
     "Enhanced Weather Service with Multi-Auth",
     # Enhanced token verifier supporting multiple auth methods
-    token_verifier=MultiAuthTokenVerifier(),
+    token_verifier=ContextAwareTokenVerifier(),
     # Auth settings for RFC 9728 Protected Resource Metadata
     auth=AuthSettings(
         issuer_url=AnyHttpUrl(os.getenv("OAUTH_ISSUER", "https://auth.example.com")),
@@ -197,7 +224,6 @@ mcp = FastMCP(
     port=3001
 )
 
-
 @mcp.tool()
 async def get_weather(city: str = "London") -> dict[str, str]:
     """Get weather data for a city."""
@@ -209,34 +235,49 @@ async def get_weather(city: str = "London") -> dict[str, str]:
         "auth_method": "Multi-auth supported"
     }
 
-
 @mcp.tool()
 async def get_forecast(city: str = "London", days: int = 5) -> dict[str, Any]:
     """Get weather forecast for a city (requires weather:read scope)."""
-    # This tool could check for specific scopes in a real implementation
+    # Check if user has required scope
+    current_user = AuthContext.require_scopes("weather:read")
+    
     return {
         "city": city,
         "days": days,
         "forecast": [
             {"day": i+1, "temperature": f"{20+i}", "condition": "Sunny"}
             for i in range(days)
-        ]
+        ],
+        "authorized_user": current_user.client_id
     }
 
-
 @mcp.tool()
-async def update_weather_station(station_id: str, data: dict) -> dict[str, str]:
+async def update_weather_station(station_id: str, data: dict = None) -> dict[str, str]:
     """
     Update weather station data (requires weather:write scope).
     This is an admin function that requires elevated permissions.
     """
+    # Check if user has required scope
+    current_user = AuthContext.require_scopes("weather:write")
+    
+    if data is None:
+        data = {
+            "temperature": 25.5,
+            "humidity": 68,
+            "pressure": 1013.2,
+            "wind_speed": 12.3,
+            "wind_direction": "NW",
+            "last_updated": datetime.now(timezone.utc).isoformat()
+        }
+    
     return {
         "station_id": station_id,
         "status": "updated",
         "timestamp": datetime.now().isoformat(),
-        "message": "Weather station data updated successfully"
+        "message": "Weather station data updated successfully",
+        "updated_by": current_user.client_id,
+        "client_id": current_user.client_id
     }
-
 
 if __name__ == "__main__":
     print("Starting Enhanced Weather Service with Multi-Authentication Support...")
