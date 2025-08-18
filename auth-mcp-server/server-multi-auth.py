@@ -16,14 +16,19 @@ class MultiAuthTokenVerifier(TokenVerifier):
 
     def __init__(self):
         """Initialize the verifier with configuration from environment variables."""
-        # OAuth/SSO Configuration
-        self.oauth_issuer = os.getenv("OAUTH_ISSUER", "https://auth.example.com")
-        self.oauth_audience = os.getenv("OAUTH_AUDIENCE", "weather-api")
-        self.jwks_url = os.getenv("JWKS_URL", f"{self.oauth_issuer}/.well-known/jwks.json")
+        # OAuth Configuration (for opaque tokens)
+        self.oauth_access_token = {
+                "client_id": "oauth-client-1",
+                "scopes": ["weather:read", "user"],
+                "subject": "oauth-user-1"
+            }
+        
+        # SSO Configuration (expected issuer and audience for JWT validation)
+        self.sso_issuer = os.getenv("SSO_ISSUER", "https://sts.windows.net/72f988bf-86f1-41af-91ab-2d7cd011db47/")
+        self.sso_audience = os.getenv("SSO_AUDIENCE", "api://auth-e6c1573d-3ea0-4392-b2c7-0cb5209f16f2")
         
         # API Key Configuration
         self.valid_api_keys = {
-            # Format: api_key -> {"client_id": str, "scopes": [str], "subject": str}
             os.getenv("API_KEY_1", "weather-api-key-123"): {
                 "client_id": "weather-client-1",
                 "scopes": ["weather:read", "user"],
@@ -35,40 +40,30 @@ class MultiAuthTokenVerifier(TokenVerifier):
                 "subject": "api-admin"
             }
         }
-        
-        # SSO/SAML Configuration (simplified for demo)
-        self.sso_tokens = {
-            # Format: sso_token -> {"subject": str, "client_id": str, "scopes": [str]}
-            "sso-token-enterprise-123": {
-                "subject": "john.doe@company.com",
-                "client_id": "enterprise-sso",
-                "scopes": ["user", "weather:read"]
-            }
-        }
 
     async def verify_token(self, token: str) -> AccessToken | None:
         """
         Verify tokens from multiple authentication sources.
         
         Args:
-            token: The token to verify (can be JWT, API key, or SSO token)
+            token: The token to verify (can be JWT, OAuth opaque token, or API key)
             
         Returns:
             AccessToken if valid, None if invalid
         """
-        # Try OAuth/SSO JWT token verification first
+        # Try SSO JWT token verification first (if it looks like a JWT)
         if self._is_jwt_token(token):
-            access_token = await self._verify_jwt_token(token)
+            access_token = await self._verify_sso_jwt_token(token)
             if access_token:
                 return access_token
 
-        # Try API Key verification
-        access_token = await self._verify_api_key(token)
+        # Try OAuth opaque token verification
+        access_token = await self._verify_oauth_token(token)
         if access_token:
             return access_token
 
-        # Try SSO token verification
-        access_token = await self._verify_sso_token(token)
+        # Try API Key verification
+        access_token = await self._verify_api_key(token)
         if access_token:
             return access_token
 
@@ -79,28 +74,49 @@ class MultiAuthTokenVerifier(TokenVerifier):
         """Check if token appears to be a JWT (has 3 parts separated by dots)."""
         return len(token.split('.')) == 3
 
-    async def _verify_jwt_token(self, token: str) -> AccessToken | None:
-        """Verify OAuth 2.0 / OpenID Connect JWT tokens."""
+    async def _verify_oauth_token(self, token: str) -> AccessToken | None:
+        """Verify OAuth opaque tokens - just presence"""
+        if token != None and token != "" and not (len(token) < 30 or len(token) > 500):  # Arbitrary safe bounds
+            token_info = self.oauth_access_token
+            print("OAuth Token Verified Successfully")
+            return AccessToken(
+                token=token,
+                client_id=token_info["client_id"],
+                scopes=token_info["scopes"],
+                expires_at=None  # OAuth tokens managed externally
+            )
+        return None
+
+    async def _verify_sso_jwt_token(self, token: str) -> AccessToken | None:
+        """Verify SSO JWT tokens with specific validation requirements."""
         try:
-            # For demo purposes, we'll decode without verification
-            # In production, use PyJWT with proper key verification
+            # Decode JWT without signature verification for demo
+            # In production, you should verify the signature
             decoded = jwt.decode(
                 token, 
                 options={"verify_signature": False},  # DO NOT USE IN PRODUCTION
                 algorithms=["RS256", "HS256"]
             )
             
-            # Validate required claims
-            if not self._validate_jwt_claims(decoded):
+            # Validate SSO-specific requirements
+            if not self._validate_sso_jwt_claims(decoded):
                 return None
 
             # Extract token information
             subject = decoded.get("sub")
-            client_id = decoded.get("client_id", decoded.get("azp", "unknown"))
-            scopes = decoded.get("scope", "").split() if "scope" in decoded else ["user"]
+            oid = decoded.get("oid")  # Object ID from Azure AD
+            client_id = decoded.get("appid", decoded.get("azp", "sso-client"))
+            
+            # Convert Microsoft scopes to weather scopes
+            scp_scopes = decoded.get("scp", "").split() if "scp" in decoded else []
+            scopes = self._convert_microsoft_scopes_to_weather_scopes(scp_scopes)
+            
             expires_at = decoded.get("exp")
-
-            print("JWT Token Verified Successfully")
+            
+            print("SSO JWT Token Verified Successfully")
+            print(f"User: {decoded.get('name', 'Unknown')}")
+            print(f"OID: {oid}")
+            print(f"Converted scopes: {scopes}")
 
             return AccessToken(
                 token=token,
@@ -109,33 +125,54 @@ class MultiAuthTokenVerifier(TokenVerifier):
                 expires_at=expires_at
             )
 
-        except jwt.InvalidTokenError:
+        except jwt.InvalidTokenError as e:
+            print(f"JWT Token validation failed: {e}")
             return None
 
-    def _validate_jwt_claims(self, decoded: Dict[str, Any]) -> bool:
-        """Validate JWT claims for OAuth/SSO tokens."""
-        # Check issuer
-        if decoded.get("iss") != self.oauth_issuer:
+    def _validate_sso_jwt_claims(self, decoded: Dict[str, Any]) -> bool:
+        """Validate JWT claims for SSO tokens with specific requirements."""
+        # Check issuer (iss)
+        if decoded.get("iss") != self.sso_issuer:
+            print(f"Invalid issuer: {decoded.get('iss')} != {self.sso_issuer}")
             return False
             
-        # Check audience
+        # Check audience (aud)
         aud = decoded.get("aud")
         if isinstance(aud, list):
-            if self.oauth_audience not in aud:
+            if self.sso_audience not in aud:
+                print(f"Invalid audience: {self.sso_audience} not in {aud}")
                 return False
-        elif aud != self.oauth_audience:
+        elif aud != self.sso_audience:
+            print(f"Invalid audience: {aud} != {self.sso_audience}")
+            return False
+            
+        # Check presence of oid (Object ID)
+        if not decoded.get("oid"):
+            print("Missing required claim: oid")
             return False
             
         # Check expiration
         exp = decoded.get("exp")
+        print(exp)
+        print(datetime.fromtimestamp(exp, tz=timezone.utc))
+        print(datetime.now(tz=timezone.utc))
         if exp and datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(tz=timezone.utc):
-            return False
-            
-        # Check subject exists
-        if not decoded.get("sub"):
+            print("Token has expired")
             return False
             
         return True
+
+    def _convert_microsoft_scopes_to_weather_scopes(self, scp_scopes: list[str]) -> list[str]:
+        """Convert Microsoft Graph scopes to weather API scopes."""
+        weather_scopes = ["user"]  # Always include user scope
+        
+        for scope in scp_scopes:
+            if scope == "User.Read":
+                weather_scopes.append("weather:read")
+            elif scope == "User.Write":
+                weather_scopes.append("weather:write")
+        
+        return list(set(weather_scopes))  # Remove duplicates
 
     async def _verify_api_key(self, token: str) -> AccessToken | None:
         """Verify API Key authentication."""
@@ -147,19 +184,6 @@ class MultiAuthTokenVerifier(TokenVerifier):
                 client_id=key_info["client_id"],
                 scopes=key_info["scopes"],
                 expires_at=None  # API keys don't expire in this demo
-            )
-        return None
-
-    async def _verify_sso_token(self, token: str) -> AccessToken | None:
-        """Verify SSO tokens (SAML, enterprise tokens, etc.)."""
-        if token in self.sso_tokens:
-            sso_info = self.sso_tokens[token]
-            print("SSO Token Verified Successfully")
-            return AccessToken(
-                token=token,
-                client_id=sso_info["client_id"],
-                scopes=sso_info["scopes"],
-                expires_at=None  # SSO tokens managed by external system
             )
         return None
 
@@ -213,12 +237,12 @@ mcp = FastMCP(
     token_verifier=ContextAwareTokenVerifier(),
     # Auth settings for RFC 9728 Protected Resource Metadata
     auth=AuthSettings(
-        issuer_url=AnyHttpUrl(os.getenv("OAUTH_ISSUER", "https://auth.example.com")),
+        issuer_url=AnyHttpUrl(os.getenv("SSO_ISSUER", "https://sts.windows.net/72f988bf-86f1-41af-91ab-2d7cd011db47/")),
         resource_server_url=AnyHttpUrl(f"http://0.0.0.0:3001/mcp"),
         required_scopes=["user"],
         # Additional metadata for clients
-        token_endpoint=AnyHttpUrl(f"{os.getenv('OAUTH_ISSUER', 'https://auth.example.com')}/oauth/token"),
-        authorization_endpoint=AnyHttpUrl(f"{os.getenv('OAUTH_ISSUER', 'https://auth.example.com')}/oauth/authorize"),
+        token_endpoint=AnyHttpUrl(f"{os.getenv('SSO_ISSUER', 'https://sts.windows.net/72f988bf-86f1-41af-91ab-2d7cd011db47/')}/oauth2/v2.0/token"),
+        authorization_endpoint=AnyHttpUrl(f"{os.getenv('SSO_ISSUER', 'https://sts.windows.net/72f988bf-86f1-41af-91ab-2d7cd011db47/')}/oauth2/v2.0/authorize"),
     ),
     host="0.0.0.0",
     port=3001
@@ -282,8 +306,8 @@ async def update_weather_station(station_id: str, data: dict = None) -> dict[str
 if __name__ == "__main__":
     print("Starting Enhanced Weather Service with Multi-Authentication Support...")
     print("Supported authentication methods:")
-    print("  - OAuth 2.0 / OpenID Connect (JWT tokens)")
+    print("  - OAuth 2.0 (opaque tokens)")
+    print("  - SSO JWT tokens (Azure AD)")
     print("  - API Keys")
-    print("  - SSO/Enterprise tokens")
     print(f"Server running on http://0.0.0.0:3001/mcp")
     mcp.run(transport="streamable-http")
