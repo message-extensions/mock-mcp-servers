@@ -56,14 +56,14 @@ class MultiAuthTokenVerifier(TokenVerifier):
             access_token = await self._verify_sso_jwt_token(token)
             if access_token:
                 return access_token
-
-        # Try OAuth opaque token verification
-        access_token = await self._verify_oauth_token(token)
+            
+        # Try API Key verification
+        access_token = await self._verify_api_key(token)
         if access_token:
             return access_token
 
-        # Try API Key verification
-        access_token = await self._verify_api_key(token)
+        # Try OAuth opaque token verification
+        access_token = await self._verify_oauth_token(token)
         if access_token:
             return access_token
 
