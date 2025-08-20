@@ -7,11 +7,11 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY server-multi-auth.py .
+COPY server-sso-oauth-jwt-verifier.py .
 COPY .env .
 
 # Expose port (auth server runs on port 3001)
 EXPOSE 3001
 
 # Run the server
-CMD ["python", "server-multi-auth.py"]
+CMD ["python", "server-sso-oauth-jwt-verifier.py"]

@@ -13,6 +13,7 @@ mock-mcp-servers/
 ├── auth-mcp-server/          # Authentication-focused MCP servers
 │   ├── server-dummy-auth.py  # Simple demo authentication server
 │   ├── server-multi-auth.py  # Multi-method authentication server
+│   ├── server-sso-oauth-jwt-verifier.py  # JWT composite (Microsoft SSO OR Adobe IMS)
 │   ├── requirements.txt      # Python dependencies
 │   ├── .env                  # Authentication configuration
 │   └── Dockerfile            # Container configuration
@@ -44,7 +45,7 @@ mock-mcp-servers/
 
 ### 2. Authentication MCP Servers
 
-#### Simple Authentication Server (`server-dummy-auth.py`)
+#### [Not Used] Simple Authentication Server (`server-dummy-auth.py`)
 **Purpose**: Basic authentication testing with demo tokens
 - **Port**: 3001
 - **Authentication**: Simple token-based (`demo-token`)
@@ -57,7 +58,7 @@ mock-mcp-servers/
 **Tools**:
 - `get_weather(city: str)` - Get weather data for specified city
 
-#### Multi-Authentication Server (`server-multi-auth.py`)
+#### [Not Used] Multi-Authentication Server (`server-multi-auth.py`)
 **Purpose**: Advanced authentication testing with multiple auth methods
 - **Port**: 3001
 - **Image**: `tezanmcpserverregistry.azurecr.io/mcp-auth-server:latest`
@@ -75,23 +76,38 @@ mock-mcp-servers/
 - `get_forecast(city: str, days: int)` - Get weather forecast (requires `weather:read` scope)
 - `update_weather_station(station_id: str, data: dict)` - Update weather data (requires `weather:write` scope)
 
-## Authentication Methods Supported
+#### [Deployed] SSO/OAuth JWT Composite Server (`server-sso-oauth-jwt-verifier.py`)
+Purpose: Validate Bearer tokens issued by either Microsoft Entra ID (Azure AD) or Adobe IMS using JWKS. The request is authorized if either provider validates the JWT.
 
-### OAuth 2.0 (Opaque Tokens)
-- Token introspection endpoint validation
-- Client credentials and authorization code flows
-- Configurable token endpoint
+- Port: 3001
+- Auth: OR-composite over two JWT verifiers
+- Providers configured by default:
+	- Microsoft SSO
+		- JWKS: https://login.microsoftonline.com/common/discovery/keys
+		- Issuer: https://sts.windows.net/72f988bf-86f1-41af-91ab-2d7cd011db47/
+		- Audience: api://auth-e6c1573d-3ea0-4392-b2c7-0cb5209f16f2
+	- Adobe IMS
+		- JWKS: https://ims-na1.adobelogin.com/ims/keys
+		- Issuer: https://ims-na1.adobelogin.com
+		- Audience: not enforced by default (add if your tokens require it)
 
-### SSO JWT Tokens (Azure AD)
-- Microsoft Azure AD integration
-- JWT signature validation
-- Automatic scope mapping from Microsoft Graph scopes
-- Support for `User.Read` and `User.Write` permissions
+Features:
+- Validates JWT signature and standard claims via each provider’s JWKS/issuer
+- Accepts the token if any configured verifier returns a valid AccessToken
+- Reuses FastMCP’s built-in JWTVerifier; no API keys or opaque tokens here
 
-### API Key Authentication
-- Simple API key validation
-- Configurable via environment variables
-- Suitable for server-to-server communication
+Tools:
+- `get_weather(city: str)` - Get current weather
+- `get_forecast(city: str, days: int)` - Get weather forecast
+
+Run locally:
+1. Install deps: `pip install -r auth-mcp-server/requirements.txt`
+2. Start: `python auth-mcp-server/server-sso-oauth-jwt-verifier.py`
+3. Call with Authorization header: `Authorization: Bearer <your_jwt>` from either Microsoft or Adobe
+
+Notes:
+- Defaults are hardcoded in the script; update the file to change issuer/audience.
+- Keep FastMCP import from `fastmcp` (as implemented).
 
 ## Deployment
 
@@ -116,25 +132,6 @@ All servers are deployed to **Azure Container Apps** using **Azure Container Reg
 2. Install dependencies: `pip install -r requirements.txt`
 3. Configure environment variables (`.env` files)
 4. Run the server: `python server.py`
-
-### Environment Configuration
-
-#### Auth Servers
-Create a `.env` file in `auth-mcp-server/` with:
-```env
-# SSO Configuration
-SSO_ISSUER=https://sts.windows.net/72f988bf-86f1-41af-91ab-2d7cd011db47/
-SSO_AUDIENCE=your-app-id
-SSO_JWKS_URL=https://login.microsoftonline.com/common/discovery/v2.0/keys
-
-# OAuth Configuration  
-OAUTH_INTROSPECT_ENDPOINT=https://your-oauth-server/introspect
-OAUTH_CLIENT_ID=your-client-id
-OAUTH_CLIENT_SECRET=your-client-secret
-
-# API Key Configuration
-API_KEYS=key1,key2,key3
-```
 
 ## Use Cases
 
