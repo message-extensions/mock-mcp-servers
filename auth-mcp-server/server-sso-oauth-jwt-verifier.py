@@ -33,8 +33,9 @@ class OrAuthVerifier(TokenVerifier):
 # Configure JWT verification against your identity providers (Microsoft SSO + Adobe OAuth)
 ms_sso_verifier = JWTVerifier(
     jwks_uri="https://login.microsoftonline.com/common/discovery/keys",
-    issuer="https://sts.windows.net/72f988bf-86f1-41af-91ab-2d7cd011db47/",
-    audience="api://auth-e6c1573d-3ea0-4392-b2c7-0cb5209f16f2"
+    issuer="https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0",
+    audience="b232067f-2258-4389-84e7-9705dc203634",
+    required_scopes=["User.Read"]
 )
 
 adobe_oauth_verifier = JWTVerifier(

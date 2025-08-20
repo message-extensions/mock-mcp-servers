@@ -31,8 +31,9 @@ This mock server is deployed to Azure Container Apps (same pattern as other serv
 - `server-sso-oauth-jwt-verifier.py`
   - Microsoft SSO verifier:
     - JWKS: https://login.microsoftonline.com/common/discovery/keys
-    - Issuer: https://sts.windows.net/72f988bf-86f1-41af-91ab-2d7cd011db47/
-    - Audience: api://auth-e6c1573d-3ea0-4392-b2c7-0cb5209f16f2
+    - Issuer: https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0
+    - Audience: b232067f-2258-4389-84e7-9705dc203634
+    - Scopes: User.Read
   - Adobe IMS verifier:
     - JWKS: https://ims-na1.adobelogin.com/ims/keys
     - Issuer/Audience: not enforced by default in this mock; adjust if needed
