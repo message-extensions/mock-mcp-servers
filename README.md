@@ -12,8 +12,8 @@ The Model Context Protocol (MCP) enables seamless communication between AI assis
 mock-mcp-servers/
 ├── auth-mcp-server/          # Authentication-focused MCP servers
 │   ├── server-dummy-auth.py  # Simple demo authentication server
-│   ├── server-multi-auth.py  # Multi-method authentication server
-│   ├── server-sso-oauth-jwt-verifier.py  # JWT composite (Microsoft SSO OR Adobe IMS)
+│   ├── server-multi-auth-old.py  # Multi-method authentication server
+│   ├── server-multi-auth.py  # JWT & API Key composite (Microsoft SSO OR Adobe IMS OR Dummy API Key)
 │   ├── requirements.txt      # Python dependencies
 │   ├── .env                  # Authentication configuration
 │   └── Dockerfile            # Container configuration
@@ -58,7 +58,7 @@ mock-mcp-servers/
 **Tools**:
 - `get_weather(city: str)` - Get weather data for specified city
 
-#### [Not Used] Multi-Authentication Server (`server-multi-auth.py`)
+#### [Not Used] Multi-Authentication Server (`server-multi-auth-old.py`)
 **Purpose**: Advanced authentication testing with multiple auth methods
 - **Port**: 3001
 - **Image**: `tezanmcpserverregistry.azurecr.io/mcp-auth-server:latest`
@@ -76,7 +76,7 @@ mock-mcp-servers/
 - `get_forecast(city: str, days: int)` - Get weather forecast (requires `weather:read` scope)
 - `update_weather_station(station_id: str, data: dict)` - Update weather data (requires `weather:write` scope)
 
-#### [Deployed] SSO/OAuth JWT Composite Server (`server-sso-oauth-jwt-verifier.py`)
+#### [Deployed] SSO/OAuth JWT Composite Server (`server-multi-auth.py`)
 Purpose: Validate Bearer tokens issued by either Microsoft Entra ID (Azure AD) or Adobe IMS using JWKS. The request is authorized if either provider validates the JWT.
 
 - Port: 3001
@@ -95,7 +95,7 @@ Purpose: Validate Bearer tokens issued by either Microsoft Entra ID (Azure AD) o
 Features:
 - Validates JWT signature and standard claims via each provider’s JWKS/issuer
 - Accepts the token if any configured verifier returns a valid AccessToken
-- Reuses FastMCP’s built-in JWTVerifier; no API keys or opaque tokens here
+- Reuses FastMCP’s built-in `JWTVerifier`; also includes a simple API Key verifier (default key: `mock_mcp_api_key`)
 
 Tools:
 - `get_weather(city: str)` - Get current weather
@@ -103,8 +103,8 @@ Tools:
 
 Run locally:
 1. Install deps: `pip install -r auth-mcp-server/requirements.txt`
-2. Start: `python auth-mcp-server/server-sso-oauth-jwt-verifier.py`
-3. Call with Authorization header: `Authorization: Bearer <your_jwt>` from either Microsoft or Adobe
+2. Start: `python auth-mcp-server/server-multi-auth.py`
+3. Call with Authorization header: `Authorization: Bearer <your_jwt>` or `Authorization: Bearer mock_mcp_api_key`
 
 Notes:
 - Defaults are hardcoded in the script; update the file to change issuer/audience.
