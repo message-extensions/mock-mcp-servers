@@ -1,0 +1,975 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+      "version": "1.0.0",
+      "title": "GitHub APIs",
+      "description": "GitHub APIs for managing GitHub operations."
+    },
+    "tags": [
+      {
+        "name": "issues",
+        "description": "Interact with GitHub Issues."
+      },
+      {
+        "name": "search",
+        "description": "Look for stuff on GitHub."
+      }
+    ],
+    "servers": [
+      {
+        "url": "https://githubmockdaservice.azurewebsites.net"
+      }
+    ],
+    "components": {
+      "schemas": {
+        "Assignee": {
+          "type": "object",
+          "properties": {
+            "login": {
+              "type": "string"
+            },
+            "id": {
+              "type": "integer"
+            }
+          }
+        },
+        "Label": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "name": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "color": {
+              "type": "string"
+            }
+          }
+        },
+        "User": {
+          "type": "object",
+          "properties": {
+            "login": {
+              "type": "string"
+            },
+            "id": {
+              "type": "integer"
+            }
+          }
+        },
+        "Milestone": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "title": {
+              "type": "string"
+            }
+          }
+        },
+        "Owner": {
+          "type": "object",
+          "properties": {
+            "login": {
+              "type": "string"
+            }
+          }
+        },
+        "PullRequest": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string"
+            },
+            "html_url": {
+              "type": "string"
+            },
+            "diff_url": {
+              "type": "string"
+            },
+            "patch_url": {
+              "type": "string"
+            }
+          }
+        },
+        "Repo": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "name": {
+              "type": "string"
+            },
+            "full_name": {
+              "type": "string"
+            }
+          }
+        },
+        "Pointer": {
+          "type": "object",
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "ref": {
+              "type": "string"
+            },
+            "sha": {
+              "type": "string"
+            },
+            "user": {
+              "$ref": "#/components/schemas/User"
+            },
+            "repo": {
+              "$ref": "#/components/schemas/Repo"
+            }
+          }
+        },
+        "PullRequestDetailed": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "url": {
+              "type": "string"
+            },
+            "html_url": {
+              "type": "string"
+            },
+            "diff_url": {
+              "type": "string"
+            },
+            "issue_url": {
+              "type": "string"
+            },
+            "number": {
+              "type": "integer"
+            },
+            "state": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "user": {
+              "$ref": "#/components/schemas/User"
+            },
+            "body": {
+              "type": "string"
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updated_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "closed_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "merged_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "merge_commit_sha": {
+              "type": "string"
+            },
+            "assignee": {
+              "$ref": "#/components/schemas/Assignee"
+            },
+            "assignees": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Assignee"
+              }
+            },
+            "requested_reviewers": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/User"
+              }
+            },
+            "labels": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Label"
+              }
+            },
+            "milestone": {
+              "$ref": "#/components/schemas/Milestone"
+            },
+            "head": {
+              "$ref": "#/components/schemas/Pointer"
+            },
+            "base": {
+              "$ref": "#/components/schemas/Pointer"
+            }
+          }
+        },
+        "Repository": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "full_name": {
+              "type": "string"
+            },
+            "html_url": {
+              "type": "string"
+            },
+            "owner": {
+              "$ref": "#/components/schemas/Owner"
+            }
+          }
+        },
+        "Issue": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "url": {
+              "type": "string"
+            },
+            "repository_url": {
+              "type": "string"
+            },
+            "html_url": {
+              "type": "string"
+            },
+            "number": {
+              "type": "integer"
+            },
+            "state": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "body": {
+              "type": "string"
+            },
+            "user": {
+              "$ref": "#/components/schemas/User"
+            },
+            "labels": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Label"
+              }
+            },
+            "assignee": {
+              "$ref": "#/components/schemas/Assignee"
+            },
+            "assignees": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Assignee"
+              }
+            },
+            "milestone": {
+              "$ref": "#/components/schemas/Milestone"
+            },
+            "comments": {
+              "type": "integer"
+            },
+            "pull_request": {
+              "$ref": "#/components/schemas/PullRequest"
+            },
+            "closed_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updated_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "repository": {
+              "$ref": "#/components/schemas/Repository"
+            }
+          }
+        },
+        "IssueDetails": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "node_id": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            },
+            "repository_url": {
+              "type": "string"
+            },
+            "labels_url": {
+              "type": "string"
+            },
+            "comments_url": {
+              "type": "string"
+            },
+            "events_url": {
+              "type": "string"
+            },
+            "html_url": {
+              "type": "string"
+            },
+            "number": {
+              "type": "integer"
+            },
+            "state": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "body": {
+              "type": "string"
+            },
+            "user": {
+              "$ref": "#/components/schemas/User"
+            },
+            "labels": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Label"
+              }
+            },
+            "assignee": {
+              "$ref": "#/components/schemas/Assignee"
+            },
+            "milestone": {
+              "$ref": "#/components/schemas/Milestone"
+            },
+            "locked": {
+              "type": "boolean"
+            },
+            "comments": {
+              "type": "integer"
+            },
+            "pull_request": {
+              "$ref": "#/components/schemas/PullRequest"
+            },
+            "closed_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updated_at": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        }
+      }
+    },
+    "paths": {
+      "/issues": {
+        "get": {
+          "operationId": "listIssues",
+          "summary": "List issues assigned to the user.",
+          "description": "list issues assigned to the user across all visible repositories.  Use the filter query parameter to fetch issues that are not necessarily assigned to the current user.\n",
+          "parameters": [
+            {
+              "name": "filter",
+              "in": "query",
+              "description": "Indicates which sorts of issues to return. Options are 'assigned', 'created', 'mentioned', 'subscribed', 'repos', 'all'.\n",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": [
+                  "assigned",
+                  "created",
+                  "mentioned",
+                  "subscribed",
+                  "repos",
+                  "all"
+                ],
+                "default": "assigned"
+              }
+            },
+            {
+              "name": "state",
+              "in": "query",
+              "description": "Indicates the state of the issues to return. Options are 'open', 'closed', 'all'.\n",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": [
+                  "open",
+                  "closed",
+                  "all"
+                ],
+                "default": "open"
+              }
+            },
+            {
+              "name": "labels",
+              "in": "query",
+              "description": "Comma-separated list of label names.",
+              "required": false,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "sort",
+              "in": "query",
+              "description": "What to sort results by. Options are 'created', 'updated', 'comments'.\n",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": [
+                  "created",
+                  "updated",
+                  "comments"
+                ],
+                "default": "created"
+              }
+            },
+            {
+              "name": "direction",
+              "in": "query",
+              "description": "The direction to sort the results by. Options are 'asc', 'desc'.\n",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": [
+                  "asc",
+                  "desc"
+                ],
+                "default": "desc"
+              }
+            },
+            {
+              "name": "since",
+              "in": "query",
+              "description": "Only show results that were last updated after given time.  Time is in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ\n",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            {
+              "name": "pulls",
+              "in": "query",
+              "description": "Include pull requests. Default is false.",
+              "required": false,
+              "schema": {
+                "type": "boolean",
+                "default": false
+              }
+            },
+            {
+              "name": "per_page",
+              "in": "query",
+              "description": "The number of results per page (max 100). Default is 5.",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 5
+              }
+            },
+            {
+              "name": "page",
+              "in": "query",
+              "description": "The page number of the results to fetch. Default is 1.",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 1
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "A list of issues",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Issue"
+                    }
+                  }
+                }
+              }
+            },
+            "304": {
+              "description": "Not modified"
+            },
+            "404": {
+              "description": "Resource not found"
+            },
+            "422": {
+              "description": "Validation failed, or the endpoint has been spammed."
+            }
+          }
+        }
+      },
+      "/repos/{owner}/{repo}/issues": {
+        "get": {
+          "operationId": "listRepoIssues",
+          "summary": "List issues in a repository.",
+          "description": "List issues from the repository. Issues can be filtered by creator, state, labels, and other criteria.\n",
+          "parameters": [
+            {
+              "name": "owner",
+              "in": "path",
+              "description": "Indicates the owner of the repository. It's a required property.",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "repo",
+              "in": "path",
+              "description": "Indicates the name of the repository. It's a required property.",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "milestone",
+              "in": "query",
+              "description": "If an integer is passed, it should refer to a milestone by its number.  If the string * is passed, issues with any milestone are accepted.  If the string none is passed, issues without milestones are returned.\n",
+              "required": false,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "state",
+              "in": "query",
+              "description": "Indicates the state of the issues to return. Can be either 'open', 'closed', or 'all'.\n",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": [
+                  "open",
+                  "closed",
+                  "all"
+                ],
+                "default": "open"
+              }
+            },
+            {
+              "name": "assignee",
+              "in": "query",
+              "description": "Can be the name of a user. Pass in none for issues with no assigned user,  and * for issues assigned to any user.\n",
+              "required": false,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "creator",
+              "in": "query",
+              "description": "The user that created the issue.",
+              "required": false,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "mentioned",
+              "in": "query",
+              "description": "A user that's mentioned in the issue.",
+              "required": false,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "labels",
+              "in": "query",
+              "description": "Comma-separated list of label names. Example: bug,ui,@high\n",
+              "required": false,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "sort",
+              "in": "query",
+              "description": "What to sort results by. Can be either created, updated, or comments.",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": [
+                  "created",
+                  "updated",
+                  "comments"
+                ],
+                "default": "created"
+              }
+            },
+            {
+              "name": "direction",
+              "in": "query",
+              "description": "The direction to sort the results by. Can be either asc or desc.",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": [
+                  "asc",
+                  "desc"
+                ],
+                "default": "desc"
+              }
+            },
+            {
+              "name": "since",
+              "in": "query",
+              "description": "Only show notifications updated after the given time.  This is a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.\n",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            {
+              "name": "per_page",
+              "in": "query",
+              "description": "The number of results per page (max 100). Default is 5.",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 5
+              }
+            },
+            {
+              "name": "page",
+              "in": "query",
+              "description": "The page number of the results to fetch. Default is 1.",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 1
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "A list of issues",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Issue"
+                    }
+                  }
+                }
+              }
+            },
+            "304": {
+              "description": "Not modified"
+            },
+            "404": {
+              "description": "Resource not found"
+            },
+            "422": {
+              "description": "Validation failed, or the endpoint has been spammed"
+            }
+          }
+        }
+      },
+      "/repos/{owner}/{repo}/issues/{issue_number}": {
+        "get": {
+          "operationId": "getIssue",
+          "summary": "Get a specific issue",
+          "description": "Fetch a specific issue by its issue number from a repository.\n",
+          "parameters": [
+            {
+              "name": "owner",
+              "in": "path",
+              "description": "Indicates the owner of the repository. It's a required property.",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "repo",
+              "in": "path",
+              "description": "Indicates the name of the repository. It's a required property.",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "issue_number",
+              "in": "path",
+              "description": "Indicates the issue number. It's a required property.",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Issue details",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/IssueDetails"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Resource not found"
+            },
+            "422": {
+              "description": "Validation failed, or the endpoint has been spammed."
+            }
+          }
+        },
+        "patch": {
+          "operationId": "updateIssue",
+          "summary": "Update an issue",
+          "description": "Update an issue by changing attributes like title, body, state, assignees, labels, milestone or state.\n",
+          "parameters": [
+            {
+              "name": "owner",
+              "in": "path",
+              "description": "Indicates the owner of the repository. It's a required property.",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "repo",
+              "in": "path",
+              "description": "Indicates the name of the repository. It's a required property.",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "issue_number",
+              "in": "path",
+              "description": "Indicates the issue number. It's a required property.",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string",
+                      "description": "The title of the issue."
+                    },
+                    "body": {
+                      "type": "string",
+                      "description": "The body content of the issue."
+                    },
+                    "state": {
+                      "type": "string",
+                      "description": "State of the issue. Either 'open' or 'closed'.",
+                      "enum": [
+                        "open",
+                        "closed"
+                      ]
+                    },
+                    "state_reason": {
+                      "type": "string",
+                      "description": "The reason for the state change. Ignored unless state is changed.",
+                      "enum": [
+                        "completed",
+                        "not_planned",
+                        "reopened"
+                      ]
+                    },
+                    "assignees": {
+                      "type": "array",
+                      "description": "Usernames to assign to the issue. Pass one or more user logins to replace the set of assignees on this issue. Send an empty array to clear all assignees from the issue.",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "labels": {
+                      "type": "array",
+                      "description": "Labels to associate with the issue.",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "milestone": {
+                      "type": "integer",
+                      "description": "The number of the milestone to associate this issue with."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Issue successfully updated",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/IssueDetails"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Resource not found"
+            },
+            "422": {
+              "description": "Validation failed, or the endpoint has been spammed."
+            }
+          }
+        }
+      },
+      "/repos/{owner}/{repo}/pulls": {
+        "get": {
+          "operationId": "listPullRequests",
+          "summary": "List pull requests from a repository.",
+          "description": "Lists pull requests in a specified repository. Pull requests can be filtered by few criteria.\n",
+          "parameters": [
+            {
+              "name": "owner",
+              "in": "path",
+              "description": "Indicates the owner of the repository. It's a required property.",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "repo",
+              "in": "path",
+              "description": "Indicates the name of the repository. It's a required property.",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "state",
+              "in": "query",
+              "description": "Either `open`, `closed`, or `all` to filter by state.\n",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": [
+                  "open",
+                  "closed",
+                  "all"
+                ],
+                "default": "open"
+              }
+            },
+            {
+              "name": "sort",
+              "in": "query",
+              "description": "What to sort results by. Can be either `created`, `updated`, `popularity`, `long-running`.\n",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": [
+                  "created",
+                  "updated",
+                  "popularity",
+                  "long-running"
+                ],
+                "default": "created"
+              }
+            },
+            {
+              "name": "direction",
+              "in": "query",
+              "description": "The direction of the sort. Can be either `asc` or `desc`.\n",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": [
+                  "asc",
+                  "desc"
+                ],
+                "default": "desc"
+              }
+            },
+            {
+              "name": "per_page",
+              "in": "query",
+              "description": "The number of results per page (max 100). Default is 5.",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 5
+              }
+            },
+            {
+              "name": "page",
+              "in": "query",
+              "description": "The page number of the results to fetch. Default is 1.",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 1
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "A list of pull requests",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/PullRequestDetailed"
+                    }
+                  }
+                }
+              }
+            },
+            "304": {
+              "description": "Not modified"
+            },
+            "422": {
+              "description": "Validation failed, or the endpoint has been spammed."
+            }
+          }
+        }
+      }
+    }
+  }

@@ -1,0 +1,4 @@
+# Minimal dependencies required by github-mock-mcp-server
+mcp[cli]
+fastmcp
+requests>=2.31.0

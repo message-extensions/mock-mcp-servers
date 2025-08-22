@@ -110,6 +110,29 @@ Notes:
 - Defaults are hardcoded in the script; update the file to change issuer/audience.
 - Keep FastMCP import from `fastmcp` (as implemented).
 
+### 3. GitHub Mock MCP Server
+
+**Purpose**: Provide a mock GitHub API exposed as MCP tools for testing GitHub-related agent/tool integrations.
+- **Port**: 3001
+- **Base URL**: Controlled by `MOCK_GITHUB_BASE_URL` (defaults to the deployed mock service)
+- **Environment variables**:
+  - `MOCK_GITHUB_BASE_URL` — override the default mock API host
+  - `MOCK_GITHUB_TIMEOUT` — request timeout in seconds (default: 30)
+
+**Tools**:
+- `list_issues(filter: str = "assigned", state: str = "open", labels: Optional[str] = None, sort: str = "created", direction: str = "desc", since: Optional[str] = None, pulls: bool = False, per_page: int = 5, page: int = 1)` — List issues assigned to the user across repositories.
+- `list_repo_issues(owner: str, repo: str, ...)` — List issues in a repository.
+- `get_issue(owner: str, repo: str, issue_number: int)` — Get a specific issue by number.
+- `update_issue(owner: str, repo: str, issue_number: int, title: Optional[str] = None, body: Optional[str] = None, state: Optional[str] = None, state_reason: Optional[str] = None, assignees: Optional[List[str]] = None, labels: Optional[List[str]] = None, milestone: Optional[int] = None)` — Update an issue.
+- `list_pull_requests(owner: str, repo: str, state: str = "open", sort: str = "created", direction: str = "desc", per_page: int = 5, page: int = 1)` — List pull requests in a repository.
+
+Run locally:
+1. Install deps: `pip install -r github-mock-mcp-server/requirements.txt`
+2. Start: `python github-mock-mcp-server/server.py`
+
+Notes:
+- The server uses synchronous HTTP requests to the mock GitHub API. For local inspector/testing use the default stdio transport (`mcp.run()`) or HTTP-based testing via `mcp.run(transport='streamable-http')`.
+
 ## Deployment
 
 All servers are deployed to **Azure Container Apps** using **Azure Container Registry**. For detailed deployment instructions, see [`DEPLOYMENT.md`](DEPLOYMENT.md).
