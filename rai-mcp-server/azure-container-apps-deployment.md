@@ -51,16 +51,7 @@ az acr credential show --name tezanmcpserverregistry --query passwords[0].value 
 
 Deploy with the new image:
 ```bash
-az containerapp create \
-  --name mcp-server-app \
-  --resource-group rg-mcp-server \
-  --environment mcp-env \
-  --image tezanmcpserverregistry.azurecr.io/mcp-server:latest \
-  --target-port 8000 \
-  --ingress external \
-  --registry-server tezanmcpserverregistry.azurecr.io \
-  --registry-username tezanmcpserverregistry \
-  --registry-password {copied password} \
+az containerapp create --name mcp-server-app --resource-group rg-mcp-server --environment mcp-env --image tezanmcpserverregistry.azurecr.io/mcp-server:latest --target-port 8000 --ingress external --registry-server tezanmcpserverregistry.azurecr.io --registry-username tezanmcpserverregistry --registry-password {copied password}
 ```
 
 ## Update Server Code

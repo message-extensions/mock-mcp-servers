@@ -8,7 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY server.py .
-COPY Responsible_AI_Content_Review.csv .
+COPY RAI_Validation_Dataset.csv .
 
 # Expose port
 EXPOSE 8000
