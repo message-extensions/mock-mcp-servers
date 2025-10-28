@@ -78,7 +78,7 @@ api_key_verifier = ApiKeyVerifier("mock_mcp_api_key")
 verifier = OrAuthVerifier(ms_sso_verifier, adobe_oauth_verifier, api_key_verifier)
 
 
-mcp = FastMCP(name="Protected API", auth=verifier, host="0.0.0.0", port=3001)
+mcp = FastMCP(name="Protected API", auth=verifier, host="0.0.0.0", port=3001, stateless_http=True)
 # mcp = FastMCP(name="Protected API", host="0.0.0.0", port=3001)
 
 @mcp.tool()

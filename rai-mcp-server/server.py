@@ -3,7 +3,7 @@ import csv
 import os
 
 # Create MCP server
-mcp = FastMCP("RAI Validation MCP Server - Enhanced", host="0.0.0.0", port="8000")
+mcp = FastMCP("RAI Validation MCP Server - Enhanced", host="0.0.0.0", port="8000", stateless_http=True)
 
 # Storage for different content types
 benign_to_xpia = {}  # Benign queries that return XPIA content

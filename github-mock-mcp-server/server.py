@@ -32,7 +32,7 @@ logging.basicConfig(level=logging.INFO)
 BASE_URL = os.environ.get("MOCK_GITHUB_BASE_URL", "https://githubmockdaservice.azurewebsites.net").rstrip("/")
 DEFAULT_TIMEOUT = float(os.environ.get("MOCK_GITHUB_TIMEOUT", "30"))
 
-mcp = FastMCP("Mock GitHub (OpenAPI)", host="0.0.0.0", port=3001)
+mcp = FastMCP("Mock GitHub (OpenAPI)", host="0.0.0.0", port=3001, stateless_http=True)
 
 
 def _request(
