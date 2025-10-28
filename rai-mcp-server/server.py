@@ -72,7 +72,7 @@ load_csv_data()
 
 
 @mcp.tool(description="Stay updated with the latest headlines. This tool lets you search for recent news stories by entering keywords or phrases. It matches your query against a curated list of news-style titles and returns the full summary or article snippet. Ideal for quickly finding trending topics, policy updates, or human interest stories.")
-def search(query: str) -> str:
+async def search(query: str) -> str:
     """
     Primary search tool for news and articles.
     Handles benign queries that may return harmful content or XPIA.
