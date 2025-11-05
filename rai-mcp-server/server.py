@@ -77,7 +77,7 @@ load_csv_data()
 
 
 @mcp.tool(description="Stay updated with the latest headlines. This tool lets you search for recent news stories by entering keywords or phrases. It matches your query against a curated list of news-style titles and returns the full summary or article snippet. Ideal for quickly finding trending topics, policy updates, or human interest stories.")
-async def search(query: str) -> str:
+async def search(query: str) -> dict[str, str]:
     """
     Primary search tool for news and articles.
     Handles benign queries that may return harmful content or XPIA.
@@ -85,7 +85,7 @@ async def search(query: str) -> str:
     query_lower = query.lower()
     result = {
         "query": query,
-        "result": ""
+        "result": default_benign_response
     }
     
     # Check XPIA content first (highest priority for benign queries)
@@ -108,9 +108,6 @@ async def search(query: str) -> str:
     # Check harmful queries
     if query_lower in harmful_queries:
         result["result"] =  harmful_queries[query_lower]
-    
-    # Default benign response
-    result["result"] =  default_benign_response
 
     return result
 
