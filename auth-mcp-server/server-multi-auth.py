@@ -1,4 +1,7 @@
 from typing import Optional, Dict, Any
+import json
+import os
+from pathlib import Path
 from fastmcp import FastMCP
 from fastmcp.server.auth.providers.jwt import JWTVerifier
 from fastmcp.server.auth import TokenVerifier, AccessToken
@@ -112,49 +115,35 @@ async def get_forecast(city: str, days: int) -> dict[str, Any]:
         ]
     }
 
-# Mock data store for search and fetch functionality
-MOCK_DOCUMENTS = {
-    "doc1": {
-        "id": "doc1",
-        "title": "Introduction to MCP Servers",
-        "text": "Model Context Protocol (MCP) servers provide a standardized way to expose tools and resources to AI applications. They enable secure authentication and authorization for AI agents.",
-        "url": "https://example.com/docs/mcp-intro",
-        "metadata": {"category": "documentation", "tags": ["mcp", "servers", "intro"]}
-    },
-    "doc2": {
-        "id": "doc2",
-        "title": "Authentication Best Practices",
-        "text": "When implementing authentication in MCP servers, consider using JWT tokens, OAuth flows, or API keys. Multi-authentication support allows flexibility for different client types.",
-        "url": "https://example.com/docs/auth-practices",
-        "metadata": {"category": "security", "tags": ["authentication", "security", "oauth"]}
-    },
-    "doc3": {
-        "id": "doc3",
-        "title": "Weather API Integration Guide",
-        "text": "This guide covers how to integrate weather APIs into your MCP server. Learn about handling city queries, forecast data, and response formatting.",
-        "url": "https://example.com/docs/weather-api",
-        "metadata": {"category": "tutorial", "tags": ["weather", "api", "integration"]}
-    },
-    "doc4": {
-        "id": "doc4",
-        "title": "FastMCP Framework Overview",
-        "text": "FastMCP is a Python framework for building MCP servers quickly. It provides decorators for tools, built-in authentication, and HTTP transport support.",
-        "url": "https://example.com/docs/fastmcp",
-        "metadata": {"category": "framework", "tags": ["fastmcp", "python", "framework"]}
-    },
-    "doc5": {
-        "id": "doc5",
-        "title": "Advanced Token Verification",
-        "text": "Composite token verifiers allow you to accept multiple authentication methods. The OrAuthVerifier pattern enables SSO, OAuth, and API key authentication simultaneously.",
-        "url": "https://example.com/docs/token-verification",
-        "metadata": {"category": "security", "tags": ["tokens", "verification", "composite"]}
-    }
-}
+# Load metadata for document search and retrieval
+SCRIPT_DIR = Path(__file__).parent
+METADATA_FILE = SCRIPT_DIR / "metadata.json"
+DOCS_DIR = SCRIPT_DIR / "docs"
+
+def load_metadata():
+    """Load document metadata from metadata.json file."""
+    try:
+        with open(METADATA_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            return data.get('documents', [])
+    except Exception as e:
+        print(f"Error loading metadata: {e}")
+        return []
+
+def load_document_content(filename: str) -> str:
+    """Load the full text content of a document from the docs/ folder."""
+    try:
+        file_path = DOCS_DIR / filename
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        print(f"Error loading document {filename}: {e}")
+        return ""
 
 @mcp.tool()
 async def search(query: str) -> str:
     """
-    Search for relevant documents based on a query string.
+    Search enterprise security and compliance documentation from companies. Returns documents covering data protection platforms, security audit systems, ISO frameworks, data retention policies, incident response procedures, and vendor risk assessment tools.
     
     Arguments:
         query: A single query string to search for.
@@ -162,21 +151,36 @@ async def search(query: str) -> str:
     Returns:
         A JSON-encoded string containing search results with id, title, and url fields.
     """
-    import json
-    
     print(f"Searching for: {query}")
     
-    # Simple keyword-based search across titles and text
-    query_lower = query.lower()
+    # Load metadata
+    documents = load_metadata()
+    
+    # Simple keyword-based search across multiple fields
+    query_words = query.lower().split()
     results = []
     
-    for doc in MOCK_DOCUMENTS.values():
-        # Check if query terms appear in title or text
-        if query_lower in doc["title"].lower() or query_lower in doc["text"].lower():
+    for doc in documents:
+        # Search in title, summary, tags, category, and key topics
+        searchable_text = " ".join([
+            doc.get("title", ""),
+            doc.get("summary", ""),
+            doc.get("category", ""),
+            " ".join(doc.get("tags", [])),
+            " ".join(doc.get("key_topics", []))
+        ]).lower()
+        
+        # Also load and search document content for more thorough results
+        if doc.get("filename"):
+            content = load_document_content(doc["filename"])
+            searchable_text += " " + content.lower()
+        
+        # Check if all query words appear in searchable text
+        if all(word in searchable_text for word in query_words):
             results.append({
-                "id": doc["id"],
-                "title": doc["title"],
-                "url": doc["url"]
+                "id": doc.get("id"),
+                "title": doc.get("title"),
+                "url": doc.get("url")
             })
     
     # Return as JSON-encoded string in a results array
@@ -186,7 +190,7 @@ async def search(query: str) -> str:
 @mcp.tool()
 async def fetch(id: str) -> str:
     """
-    Fetch the full contents of a document by its unique identifier.
+    Retrieve complete documentation by ID. Access detailed information about company-specific systems used by enterprises for security, compliance, and risk management operations.
     
     Arguments:
         id: A unique identifier for the search document.
@@ -194,22 +198,43 @@ async def fetch(id: str) -> str:
     Returns:
         A JSON-encoded string containing the full document with id, title, text, url, and metadata fields.
     """
-    import json
-    
     print(f"Fetching document: {id}")
     
-    # Retrieve document by ID
-    document = MOCK_DOCUMENTS.get(id)
+    # Load metadata
+    documents = load_metadata()
     
-    if document is None:
+    # Find document by ID
+    document_meta = None
+    for doc in documents:
+        if doc.get("id") == id:
+            document_meta = doc
+            break
+    
+    if document_meta is None:
         # Return error message if document not found
         return json.dumps({
             "error": f"Document with id '{id}' not found",
             "id": id
         })
     
+    # Load the full document content
+    text = load_document_content(document_meta.get("filename", ""))
+    
+    # Construct response with document metadata and content
+    response = {
+        "id": document_meta.get("id"),
+        "title": document_meta.get("title"),
+        "text": text,
+        "url": document_meta.get("url"),
+        "metadata": {
+            "category": document_meta.get("category"),
+            "tags": document_meta.get("tags", []),
+            "summary": document_meta.get("summary")
+        }
+    }
+    
     # Return the full document as JSON-encoded string
-    return json.dumps(document)
+    return json.dumps(response)
 
 if __name__ == "__main__":
     print("Starting Enhanced Weather Service with Multi-Authentication Support...")

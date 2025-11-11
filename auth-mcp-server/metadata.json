@@ -1,0 +1,60 @@
+{
+  "documents": [
+    {
+      "id": "meridian-data-001",
+      "title": "Meridian Corp Data Protection Framework",
+      "filename": "meridian-data-protection.md",
+      "url": "https://meridian-corp.internal/policies/data-protection-framework",
+      "category": "Data Privacy & Protection",
+      "tags": ["DataGuardian", "compliance", "PII", "privacy", "CustomerTrust"],
+      "summary": "Proprietary data protection framework using Meridian's DataGuardian platform for managing customer PII across CloudVault and ProcessFlow systems with automated compliance workflows."
+    },
+    {
+      "id": "nexatech-audit-002",
+      "title": "NexaTech Security Audit Process", 
+      "filename": "nexatech-security-audit.md",
+      "url": "https://nexatech.internal/audits/security-audit-process",
+      "category": "Security & Audit Compliance",
+      "tags": ["TechAudit", "security", "controls", "compliance", "CyberScope"],
+      "summary": "NexaTech's proprietary security audit methodology using TechAudit platform and CyberScope monitoring for quarterly compliance assessments and control testing."
+    },
+    {
+      "id": "apex-iso-003",
+      "title": "Apex Industries ISO Framework",
+      "filename": "apex-iso-framework.md", 
+      "url": "https://apex-industries.internal/security/iso-framework",
+      "category": "Information Security Management",
+      "tags": ["ApexSecure", "ISMS", "security", "SecureCore", "certification"],
+      "summary": "Apex Industries' implementation of ISO standards through ApexSecure platform and SecureCore architecture for manufacturing security compliance management."
+    },
+    {
+      "id": "quantum-retention-004",
+      "title": "Quantum Dynamics Data Retention Policy",
+      "filename": "quantum-data-retention.md",
+      "url": "https://quantum-dynamics.internal/policies/data-retention", 
+      "category": "Data Governance & Records Management",
+      "tags": ["DataCycle", "retention", "QuantumVault", "lifecycle", "compliance"],
+      "summary": "Quantum Dynamics' data lifecycle management using DataCycle engine and QuantumVault storage for automated retention and disposal processes."
+    },
+    {
+      "id": "techflow-incident-005",
+      "title": "TechFlow Corporation Incident Response",
+      "filename": "techflow-incident-response.md",
+      "url": "https://techflow.internal/security/incident-response",
+      "category": "Cybersecurity & Incident Management", 
+      "tags": ["AlertStream", "incident", "ResponseNet", "containment", "TechFlow"],
+      "summary": "TechFlow's proprietary incident response using AlertStream detection and ResponseNet coordination for security breach management and recovery procedures."
+    },
+    {
+      "id": "synertech-vendor-006",
+      "title": "SynerTech Partner Security Framework",
+      "filename": "synertech-partner-security.md",
+      "url": "https://synertech.internal/partners/security-framework", 
+      "category": "Third-Party Risk & Vendor Management",
+      "tags": ["SynerScore", "vendor", "FlexiPlatform", "PartnerWatch", "CloudMerge"],
+      "summary": "SynerTech's vendor evaluation using SynerScore assessment and PartnerWatch monitoring for FlexiPlatform integration partners throughout the vendor lifecycle."
+    }
+  ],
+  "total_documents": 6,
+  "last_updated": "2025-11-11"
+}

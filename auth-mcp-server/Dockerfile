@@ -10,6 +10,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY server-multi-auth.py .
 COPY .env .
 
+# Copy document repository and metadata
+COPY metadata.json .
+COPY docs/ ./docs/
+
 # Expose port (auth server runs on port 3001)
 EXPOSE 3001
 
