@@ -1,7 +1,7 @@
 mcp[cli]
-fastapi
-fastmcp
-uvicorn
+fastapi==0.120.0
+fastmcp==2.13.0.2
+uvicorn==0.38.0
 PyJWT>=2.8.0
 cryptography>=41.0.0
 requests>=2.31.0
