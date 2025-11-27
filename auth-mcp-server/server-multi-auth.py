@@ -78,7 +78,6 @@ adobe_oauth_verifier = JWTVerifier(
 
 entra_oauth_verifier = JWTVerifier(
     jwks_uri="https://login.microsoftonline.com/common/discovery/keys",
-    issuer="https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0",
     audience="3a4f4d9b-3ae6-4bbe-b665-409dccf95599", 
     required_scopes=["MCPTools.Invoke"]
 )
