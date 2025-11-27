@@ -2,15 +2,16 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copy requirements first for better caching
+# Copy requirements and install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Copy application files
 COPY server.py .
 COPY RAI_Validation_Dataset.csv .
+COPY resources/ ./resources/
 
-# Expose port
+# Expose the port the app runs on
 EXPOSE 8000
 
 # Run the server

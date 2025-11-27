@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAI Content Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content-area {
+            padding: 30px;
+        }
+
+        .field {
+            margin-bottom: 20px;
+        }
+
+        .field-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #667eea;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .field-value {
+            background: #f7f8fa;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #2d3748;
+            border-left: 3px solid #667eea;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .category-xpia_keyword,
+        .category-xpia_exfiltration {
+            background: #feb2b2;
+            color: #742a2a;
+        }
+
+        .category-hate {
+            background: #fbd38d;
+            color: #744210;
+        }
+
+        .category-violence {
+            background: #fc8181;
+            color: #742a2a;
+        }
+
+        .category-sexual {
+            background: #f6ad55;
+            color: #7c2d12;
+        }
+
+        .category-selfharm {
+            background: #f687b3;
+            color: #702459;
+        }
+
+        .category-general,
+        .category-default {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+
+        .status-success {
+            color: #22543d;
+            background: #c6f6d5;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .status-error {
+            color: #742a2a;
+            background: #feb2b2;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .warning-banner {
+            background: #fef5e7;
+            border: 2px solid #f39c12;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .warning-icon {
+            font-size: 24px;
+        }
+
+        .warning-text {
+            flex: 1;
+            color: #7d6608;
+            font-size: 14px;
+        }
+
+        .json-viewer {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .footer {
+            background: #f7f8fa;
+            padding: 20px 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #718096;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .empty {
+            font-style: italic;
+            color: #777;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: #111;
+            }
+
+            .container {
+                background: #1a1a1a;
+            }
+
+            .content-area {
+                color: #eee;
+            }
+
+            .field-value {
+                background: #222;
+                color: #eee;
+            }
+
+            .footer {
+                background: #222;
+                color: #999;
+                border-top-color: #333;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>RAI Content Viewer</h1>
+            <p>Responsible AI Validation and Content Analysis</p>
+        </div>
+
+        <div class="content-area" id="content-area">
+            <!-- Content will be dynamically injected here -->
+        </div>
+
+        <div class="footer">
+            <p>RAI MCP Server - Apps SDK Enhanced | OpenAI Apps Platform</p>
+        </div>
+    </div>
+
+    <script>
+        var rendered = false;
+
+        function escapeHtml(text) {
+            return String(text).replace(/[&<>"']/g, s => ({ 
+                '&': '&amp;', 
+                '<': '&lt;', 
+                '>': '&gt;', 
+                '"': '&quot;', 
+                '\'': '&#39;' 
+            }[s]));
+        }
+
+        function populateData() {
+            const start = performance.now();
+            const contentArea = document.getElementById('content-area');
+            const widgetState = window?.openai?.widgetState;
+            const toolOutput = window?.openai?.toolOutput;
+            
+            // Get structuredContent from toolOutput or fallback to widgetState
+            const data = toolOutput?.structuredContent || widgetState || {};
+
+            console.group('RAIContentViewer');
+            console.log('[init] window.openai:', window?.openai);
+            if (toolOutput) {
+                console.log('[init] toolOutput keys:', Object.keys(toolOutput));
+                console.log('[init] structuredContent:', toolOutput.structuredContent);
+                rendered = true;
+            } else if (widgetState) {
+                console.log('[init] widgetState keys:', Object.keys(widgetState));
+                rendered = true;
+            } else {
+                console.warn('[init] No toolOutput or widgetState available');
+            }
+
+            function renderContent(data) {
+                console.group('RenderContent');
+                
+                if (!data || typeof data !== 'object' || Object.keys(data).length === 0) {
+                    console.warn('[render] No data available. data value:', data);
+                    contentArea.innerHTML = '<p class="empty">No content available</p>';
+                    console.log('[done] Render time', (performance.now() - start).toFixed(2), 'ms');
+                    console.groupEnd();
+                    return;
+                }
+
+                console.log('[render] data keys:', Object.keys(data));
+
+                let html = '';
+
+                // Check for XPIA or harmful content warnings
+                if (data.category && (data.category.includes('xpia') || data.category === 'hate' || 
+                    data.category === 'violence' || data.category === 'sexual' || data.category === 'selfharm')) {
+                    console.log('[render] showing warning for category:', data.category);
+                    html += `
+                        <div class="warning-banner">
+                            <div class="warning-icon">⚠️</div>
+                            <div class="warning-text">
+                                <strong>Content Warning:</strong> This response may contain potentially harmful or sensitive content for RAI validation purposes.
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Render each field in the structured data
+                for (const [key, value] of Object.entries(data)) {
+                    const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    let formattedValue = value;
+
+                    // Special formatting for specific fields
+                    if (key === 'category') {
+                        formattedValue = `<span class="category-badge category-${escapeHtml(value)}">${escapeHtml(value)}</span>`;
+                    } else if (key === 'status') {
+                        formattedValue = `<span class="status-${escapeHtml(value)}">${escapeHtml(value)}</span>`;
+                    } else if (typeof value === 'object' && value !== null) {
+                        formattedValue = `<div class="json-viewer">${escapeHtml(JSON.stringify(value, null, 2))}</div>`;
+                        html += `<div class="field"><div class="field-label">${escapeHtml(formattedKey)}</div>${formattedValue}</div>`;
+                        continue;
+                    } else if (typeof value === 'string' && value.length > 100) {
+                        formattedValue = `<div class="field-value">${escapeHtml(value)}</div>`;
+                        html += `<div class="field"><div class="field-label">${escapeHtml(formattedKey)}</div>${formattedValue}</div>`;
+                        continue;
+                    } else {
+                        formattedValue = escapeHtml(String(value));
+                    }
+
+                    html += `
+                        <div class="field">
+                            <div class="field-label">${escapeHtml(formattedKey)}</div>
+                            <div class="field-value">${formattedValue}</div>
+                        </div>
+                    `;
+                }
+
+                // Add raw JSON view at the bottom
+                html += `
+                    <div class="field">
+                        <div class="field-label">Raw Data (JSON)</div>
+                        <div class="json-viewer">${escapeHtml(JSON.stringify(data, null, 2))}</div>
+                    </div>
+                `;
+
+                contentArea.innerHTML = html;
+
+                console.log('[done] Render time', (performance.now() - start).toFixed(2), 'ms');
+                console.groupEnd();
+            }
+
+            renderContent(data);
+            console.groupEnd();
+        }
+
+        // Initial render
+        populateData();
+
+        // Listen for OpenAI SDK global updates
+        window.addEventListener("openai:set_globals", populateData, { passive: true });
+
+        // Retry rendering if not yet rendered (fallback)
+        setInterval(() => {
+            if (!rendered) {
+                console.log('Re-populating data as not yet rendered');
+                populateData();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
